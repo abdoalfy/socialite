@@ -1,0 +1,218 @@
+reference : https://www.youtube.com/watch?v=OjkW8YwxQoI&t=660s&ab_channel=%D9%8A%D9%88%D9%85%D9%8A%D8%A7%D8%AA%D9%85%D8%B7%D9%88%D8%B1%D9%85%D9%88%D8%A7%D9%82%D8%B9
+
+1-facebook : 
+go to facebook developer then create new application then go to setting of this application and get : معرف التطبيق , المفتاح السري للتطبيق and but your callback url --not that it cant be localhost it must https
+
+
+
+2- google go to google console then create new app then api and service the ceradintionls -- create new cerdinationls then creadinationls screen then extrnal then add the project info save and next and in scopes 
+add email and profile and save and contrinue then save 
+filnally go to cardinationls and create oauth id client tne enter web app and add the callback url like this 
+http://localhost/test_filament/auth/google/callback
+
+then it will give you client id and client secret
+
+
+3-in github : to githup >> settings >> developer settings >> new oauth app >>
+
+
+4- install this package 
+              composer require laravel/socialite
+
+5- add it in the providers 
+      SocialiteServiceProvider::class,
+
+6- create table social login have this 2 columns
+            $table->string('social_id')->nullable();
+            $table->string('social_type')->nullable();
+
+
+7-create controller socialite controller handel the view for each way separate :
+
+use Laravel\Socialite\Facades\Socialite;
+
+    public function redirecttogoogle(){
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function redirecttofaceook(){
+        return Socialite::driver('facebook')->redirect();
+    }
+
+    public function redirecttogithub(){
+        return Socialite::driver('github')->redirect();
+    }
+
+
+// then create the handel function for each way
+
+   // the handel functions 
+
+    public function googlecallback()
+    {
+        try {
+            $user =Socialite::driver('google')->user();
+            $findUser=User::where('social_id',$user->id)->first();
+            if($findUser){
+                Auth::login($findUser);
+                $token = Auth::login($findUser);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User login successfully',
+                    'user' => $findUser,
+                    'authorisation' => [
+                        'token' => $token,
+                        'type' => 'bearer',
+                    ]
+                ]);
+            }else{
+               $newUser = User::Create([
+                    'email'=>$user->email,
+                    'name'=>$user->name,
+                    'social_id'=> $user->id,
+                    'social_type' => 'google',
+                    'password'=>Hash::make('my-google'),
+               ]);
+               Auth::login($newUser);
+               $token = Auth::login($newUser);
+               return response()->json([
+                'status' => 'success',
+                'message' => 'User created and login successfully',
+                'user' => $newUser,
+                'authorisation' => [
+                    'token' => $token,
+                    'type' => 'bearer',
+                ]
+            ]);
+          }
+        }
+        catch(Exception $x){
+            dd($x->getMessage());
+        }
+    }
+
+
+    public function githubcallback()
+    {
+        try {
+            $user = Socialite::driver('github')->user();
+            $findUser = User::where('social_id', $user->id)->first();
+            if ($findUser) {
+                Auth::login($findUser);
+                $token = Auth::login($findUser);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User login successfully',
+                    'user' => $findUser,
+                    'authorisation' => [
+                        'token' => $token,
+                        'type' => 'bearer',
+                    ]
+                ]);
+            } else {
+                $newUser = User::Create([
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'social_id' => $user->id,
+                    'social_type' => 'github',
+                    'password' => Hash::make('my-github'),
+                ]);
+                Auth::login($newUser);
+                $token = Auth::login($newUser);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User created and login successfully',
+                    'user' => $newUser,
+                    'authorisation' => [
+                        'token' => $token,
+                        'type' => 'bearer',
+                    ]
+                ]);
+            }
+        } catch (Exception $x) {
+        dd($x->getMessage());
+        }
+    }   
+
+
+
+    public function facebookcallback()
+    {
+        try {
+            $user =Socialite::driver('facebook')->user();
+            $findUser=User::where('social_id',$user->id)->first();
+            if($findUser){
+                Auth::login($findUser);
+                $token = Auth::login($findUser);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User login successfully',
+                    'user' => $findUser,
+                    'authorisation' => [
+                        'token' => $token,
+                        'type' => 'bearer',
+                    ]
+                ]);
+            }else{
+                $newUser = User::Create([
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'social_id' => $user->id,
+                    'social_type' => 'facebook',
+                    'password' => Hash::make('my-facebook'),
+                ]);
+                Auth::login($newUser);
+                $token = Auth::login($newUser);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User created and login successfully',
+                    'user' => $newUser,
+                    'authorisation' => [
+                        'token' => $token,
+                        'type' => 'bearer',
+                    ]
+                ]);
+            }
+        }
+        catch(Exception $x){
+            dd($x->getMessage());
+        }
+    }
+
+
+8- dont forget to add the cardanatioonls that you git in the service.php file
+
+    //social login services
+
+    'facebook' => [
+        'client_id' => '',
+        'client_secret' => '',
+        'redirect' => 'http://localhost/test_filament/auth/facebook/callback',
+    ],
+
+    'google' => [
+        'client_id' => '',
+        'client_secret' => '',
+        'redirect' => 'http://localhost/test_filament/auth/google/callback',
+    ],
+
+    'github' => [
+        'client_id' => '',
+        'client_secret' => '',
+        'redirect' => 'http://localhost/test_filament/auth/github/callback',
+    ],
+
+
+9-the route must be in the web file not api 
+
+//google
+Route::get('auth/google',[SocilaLoginController::class,'redirecttogoogle']);
+Route::get('auth/google/callback',[SocilaLoginController::class,'googlecallback']);
+
+//github
+Route::get('auth/github',[SocilaLoginController::class,'redirecttogithub']);
+Route::get('auth/github/callback',[SocilaLoginController::class,'githubcallback']);
+
+//facebook
+Route::get('auth/facebook',[SocilaLoginController::class,'redirecttofaceook']);
+Route::get('auth/facebook/callback',[SocilaLoginController::class,'facebookcallback']);
